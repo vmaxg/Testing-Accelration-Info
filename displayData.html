@@ -28,7 +28,7 @@
  
 	var accelerationValues = [];
 	var velocityValues = [];
-	var rofTValues = [];
+	var displacementValues = [];
 	// some variables that relate to 6050 values
  
 		
@@ -50,8 +50,9 @@
 	
 	
 	function parseValues(){
+		//alert("start");
 		accelerationValues = [];
-		rofTValues = [];
+		displacementValues = [];
 		velocityValues = [];
 		var values = textDisplayId.value;
 		//alert(values);
@@ -68,10 +69,10 @@
 				if (rowData.length > 3){
 					// going to make an array of arrays instead of an object.  it's to make the drawing easier..
 					itemComp = [];
-					itemComp.push(parseFloat(rowData[0]) );
-					itemComp.push(parseFloat(rowData[1]) );
-					itemComp.push(parseFloat(rowData[2]) );
-					itemComp.push(parseFloat(rowData[3]) );
+					itemComp.push(parseFloat(rowData[0]) ); // THIS IS T
+					itemComp.push(parseFloat(rowData[1]) ); // THIS IS X
+					itemComp.push(parseFloat(rowData[2]) );	// THIS IS Y
+					itemComp.push(parseFloat(rowData[3]) ); // THIS IS Z
 					
 					accelerationValues.push(itemComp); 
 				}
@@ -81,7 +82,7 @@
 		}
 		 
 		computeVelocities(); 
-		computeRofT();
+		computeDisplacement();
 		drawAccelerationVelocity(1);
 		
 		fillInTextFields();
@@ -103,6 +104,10 @@
 	
 		velocityValues.push(itemToPush);
 	
+		upToX = 0.0;
+		upToY = 0.0;
+		upToZ = 0.0;
+	
 		for (i = 1; i < accelerationValues.length; i++){
 			itemInit = accelerationValues[i];
 			nextT = itemInit[0];
@@ -110,13 +115,26 @@
 			nextY = itemInit[2];
 			nextZ = itemInit[3];
 			
-			deltaT = parseFloat(nextT-preT).toFixed(5);
+			deltaT = nextT-preT;
 			
+			vX = (nextX) * deltaT ;
+			vY = (nextY) * deltaT ;
+			vZ = (nextZ) * deltaT;
+			
+			//alert(nextX + " - " +  preX + " - " + deltaT);
+			
+			upToX += vX;
+			upToY += vY;
+			upToZ += vZ;
+			
+			//alert( "  X: " + upToX + " - Y: " +  upToY + " - Z: " + upToZ);
+			
+			 
 			itemToPush = [];
-			itemToPush.push(  parseFloat(nextT).toFixed(2) );
-			itemToPush.push(  parseFloat(  (nextX-preX)/deltaT ).toFixed(2)  );
-			itemToPush.push(  parseFloat(  (nextY-preY)/deltaT ).toFixed(2)  );
-			itemToPush.push(  parseFloat(  (nextZ-preZ)/deltaT ).toFixed(2)  );
+			itemToPush.push(  parseFloat(nextT).toFixed(6) );
+			itemToPush.push(  parseFloat(upToX).toFixed(6)  );
+			itemToPush.push(  parseFloat(upToY).toFixed(6) );
+			itemToPush.push(  parseFloat(upToZ).toFixed(6) );
 			
 			velocityValues.push(itemToPush);
 			//alert( "accelX: " + itemToPush[1] + " - " + (nextX-preX) + " - " + nextX + " - " + preX);
@@ -130,7 +148,7 @@
 	} 	
  	
  	
- 	function computeRofT(){
+ 	function computeDisplacement(){
 		itemInit = velocityValues[0];
 		preT = itemInit[0];
 		preX = itemInit[1];
@@ -143,8 +161,12 @@
 		itemToPush.push(0);
 		itemToPush.push(0);
 	
-		rofTValues.push(itemToPush);
+		displacementValues.push(itemToPush);
 	
+		upToX = 0.0;
+		upToY = 0.0;
+		upToZ = 0.0;
+		
 		for (i = 1; i < velocityValues.length; i++){
 			itemInit = velocityValues[i];
 			nextT = itemInit[0];
@@ -152,15 +174,28 @@
 			nextY = itemInit[2];
 			nextZ = itemInit[3];
 			
-			deltaT = parseFloat(nextT-preT).toFixed(5);
+			//deltaT = parseFloat(nextT-preT).toFixed(5);
+			
+			deltaT = nextT-preT;
+			
+			vX = (nextX ) * deltaT ;
+			vY = (nextY ) * deltaT ;
+			vZ = (nextZ ) * deltaT;
+			
+			//alert(nextX + " - " +  preX + " - " + deltaT);
+			
+			upToX += vX;
+			upToY += vY;
+			upToZ += vZ;
+			
 			
 			itemToPush = [];
-			itemToPush.push(  parseFloat(nextT).toFixed(2) );
-			itemToPush.push(  parseFloat(  (nextX-preX) * deltaT ).toFixed(2)  );
-			itemToPush.push(  parseFloat(  (nextY-preY) * deltaT ).toFixed(2)  );
-			itemToPush.push(  parseFloat(  (nextZ-preZ) * deltaT ).toFixed(2)  );
+			itemToPush.push(  parseFloat(nextT).toFixed(6) );
+			itemToPush.push(  parseFloat(upToX).toFixed(6)  );
+			itemToPush.push(  parseFloat(upToY).toFixed(6)  );
+			itemToPush.push(  parseFloat(upToZ).toFixed(6)  );
 			
-			rofTValues.push(itemToPush);
+			displacementValues.push(itemToPush);
 			//alert( "rofT: " + itemToPush[1] + " - " + (nextX-preX) + " - " + nextX + " - " + preX + " - " + deltaT) ;
 			
 			preT = nextT;
@@ -171,14 +206,17 @@
 		}
 	} 	
 	function fillInTextFields(){
+		velocityTextId.value = "";
+		rofTTextId.value = "";
+		
 		for(i = 0 ; i < accelerationValues.length; i++){
 			var it = velocityValues[i];
 			
 			var txt = it[0]+ " , " + it[1] + " , " + it[2] + " , " + it[3] + "\n";
 			velocityTextId.value = velocityTextId.value + txt;
 		}
-		for(i = 0 ; i < rofTValues.length; i++){
-			var it = rofTValues[i];
+		for(i = 0 ; i < displacementValues.length; i++){
+			var it = displacementValues[i];
 			
 			var txt = it[0]+ " , " + it[1] + " , " + it[2] + " , " + it[3] + "\n";
 			rofTTextId.value = rofTTextId.value + txt;
@@ -209,19 +247,17 @@
 			 drawArrayIndexValue(yDrawingContext, velocityValues,0,2,"green" , yCaption);
 			 drawArrayIndexValue(zDrawingContext, velocityValues,0,3,"blue" , zCaption );
 		}
-		else  {
-			drawArrayIndexValue(xDrawingContext, rofTValues,0,1,"red", xCaption);
-			drawArrayIndexValue(yDrawingContext, rofTValues,0,2,"green" , yCaption);
-			drawArrayIndexValue(zDrawingContext, rofTValues,0,3,"blue" , zCaption );
+		else if (whatToDraw == 3){
+			drawArrayIndexValue(xDrawingContext, displacementValues,0,1,"red", xCaption);
+			drawArrayIndexValue(yDrawingContext, displacementValues,0,2,"green" , yCaption);
+			drawArrayIndexValue(zDrawingContext, displacementValues,0,3,"blue" , zCaption );
 		}
-		
-		// this theorically draws the x and y values - but it's a mess.  Not sure why - I'll bet I'm not really drawing what I  think I'm drawing.. 
-		//drawArrayIndexValue(zDrawingContext, rofTValues,1,2,"blue" , zCaption );
-		
-		//drawArrayIndexValue(xDrawingContext, rofTValues,0,1,"red", xCaption);
-		//drawArrayIndexValue(yDrawingContext, rofTValues,0,2,"green" , yCaption);
-		//drawArrayIndexValue(zDrawingContext, rofTValues,0,3,"blue" , zCaption );
-		
+		else {
+			// this theorically draws the x and y values - but it's a mess.  Not sure why - I'll bet I'm not really drawing what I  think I'm drawing.. 
+			drawArrayIndexValue(xDrawingContext, displacementValues,1,2,"red", xCaption);
+			drawArrayIndexValue(yDrawingContext, displacementValues,1,3,"green" , yCaption);
+			drawArrayIndexValue(zDrawingContext, displacementValues,2,3,"blue" , zCaption );
+		}
 	}
 	
  	function drawArrayIndexValue(context, arrayV, indexToDrawX, indexToDraw, colorToUse, captionDiv ) {
@@ -357,19 +393,22 @@
 6.70,0.00,-0.73,9.86
 6.73,0.15,-0.15,9.86
 
+
+
 </textarea>	 
-<textarea id = "velocityTextId" rows="25" cols = "30" style = "display: inline-block;">
-Acceleration will show here (dV / dT)
+<textarea id = "velocityTextId" rows="25" cols = "50" style = "display: inline-block;">
+Cumulative Velocity shows here ( v(t) + dA * dT)
 </textarea>
 
-<textarea id = "rofTTextId" rows="25" cols = "30" style = "display: inline-block;">
-R(T)  (dA * dT)
+<textarea id = "rofTTextId" rows="25" cols = "50" style = "display: inline-block;">
+Cumulative displacement shows here ( x(T) + dV * dT)
 </textarea>
 
 <section>
 <input type = "radio" value= "acceleration" name = "whattoshow" onclick = "showThis(1)" checked>Graph Acceleration
 <input type = "radio" value= "velocity" name = "whattoshow" onclick = "showThis(2)">Graph Velocity
-<input type = "radio" value= "rofT" name = "whattoshow"  onclick = "showThis(3)">Graph R(T)
+<input type = "radio" value= "rofT" name = "whattoshow"  onclick = "showThis(3)">Graph Displacement
+<input type = "radio" value= "rofT" name = "whattoshow"  onclick = "showThis(4)">Graph xy / yz / xz
 
 </section>
 
