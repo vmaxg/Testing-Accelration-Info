@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+
+<title>Simple Accelerometer Values</title>
+
+<script>
+
+	// for drawing the graphs
+	var touchCanvas;
+	var touchContext;
+	
+	var xDrawingCanvas;
+	var xDrawingContext;
+	
+	var yDrawingCanvas;
+	var yDrawingContext;
+	
+	var zDrawingCanvas;
+	var zDrawingContext;
+	
+	var widthCanvas = 500; // values match the canvas pixel spec in the HTML declaration
+	var heightCanvas = 250; // values match the canvas pixel spec in the HTML declaration
+	// stores the values
+	 
+ 
+	var accelerationValues = [];
+	
+	// some variables that relate to 6050 values
+ 
+		
+	
+	function init(){
+	  
+		xDrawingCanvas = document.getElementById("xCanvasSig");
+		xDrawingContext = xDrawingCanvas.getContext("2d");
+		 
+		 
+		yDrawingCanvas = document.getElementById("yCanvasSig");
+		yDrawingContext = yDrawingCanvas.getContext("2d");
+		
+		zDrawingCanvas = document.getElementById("zCanvasSig");
+		zDrawingContext = zDrawingCanvas.getContext("2d");
+		
+	} 
+	
+	
+	function parseValues(){
+		accelerationValues = [];
+		var values = textDisplayId.value;
+		//alert(values);
+		
+		var splitEm = values.split('\n');
+		//alert(splitEm.length);
+		
+		for (i = 0; i < splitEm.length; i++){
+			rowItem = splitEm[i];
+			//alert(rowItem);
+			 
+			if (rowItem.length > 0){
+				var rowData = rowItem.split(","); 
+				if (rowData.length > 3){
+					// going to make an array of arrays instead of an object.  it's to make the drawing easier..
+					itemComp = [];
+					itemComp.push(parseFloat(rowData[0]) );
+					itemComp.push(parseFloat(rowData[1]) );
+					itemComp.push(parseFloat(rowData[2]) );
+					itemComp.push(parseFloat(rowData[3]) );
+					
+					accelerationValues.push(itemComp); 
+				}
+				 
+			}  
+			
+		}
+		 
+		drawAccelerationVelocity();
+	} 
+  
+ 		function drawAccelerationVelocity(){
+ 			xDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+ 			yDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+ 			zDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+		//drawNormalizedAccelrationVelocity(accelerationValues, "red");
+		//drawArrayIndexValue(accelerationValues, 1, red) ;
+		//drawNormalizedAccelrationVelocity(velocityValues, "blue");
+		
+		drawArrayIndexValue(xDrawingContext, accelerationValues,1,"red", xCaption);
+		drawArrayIndexValue(yDrawingContext, accelerationValues,2,"green" , yCaption);
+		drawArrayIndexValue(zDrawingContext, accelerationValues,3,"blue" , zCaption );
+		
+	}
+	
+ 	function drawArrayIndexValue(context, arrayV, indexToDraw, colorToUse, captionDiv ) {
+ 			//alert(arrayV);
+ 			
+ 			// first go through the whole thing and add up the total time.. important for graphing.. 
+		maxValue = 0;
+		minValue = 1000000;
+		minTime = 1000000;
+		maxTime = 0;
+		for (var i = 0; i < arrayV.length; i++) {
+			itemVal = arrayV[i];
+			//alert(itemVal);
+			//totalTime += itemVal.t;
+			if (itemVal[indexToDraw] > maxValue){
+				maxValue = itemVal[indexToDraw];
+			}
+			if (itemVal[indexToDraw] < minValue){
+				minValue = itemVal[indexToDraw];
+			}
+			
+			if (itemVal[0] > maxTime){
+				maxTime = itemVal[0];
+			}
+			 
+			if (itemVal[0] < minTime){
+				minTime = itemVal[0];
+			} 
+		}
+		
+		var totalTime = maxTime-minTime;
+		//alert("Time " + totalTime + " == " + minTime + " == " + maxTime);
+		
+		var totalYDist = maxValue-minValue;
+		//alert("Value " + totalYDist + " == " + minValue + " == " + maxValue);
+		
+		xInc = widthCanvas/totalTime;
+		yInc = heightCanvas/totalYDist;
+		//alert("x and y Inc " + xInc + " == " + yInc);
+		 
+		xAdj = minTime * xInc;
+		yAdj = minValue * yInc;
+		 
+		context.strokeStyle = colorToUse; 
+		context.beginPath(); 
+		
+		for (i = 0; i < arrayV.length; i++){
+			var theItem = arrayV[i];
+			xpoint = (theItem[0] * xInc) - xAdj;
+			ypoint = heightCanvas - ( (theItem[indexToDraw] * yInc) - yAdj );
+			//alert(xpoint + " - " + ypoint)
+			//alert(theItem.t + " - " + theItem.x + " - " + whereX + " - " + axisY)
+			context.lineTo(xpoint, ypoint);
+	        context.stroke();
+		} 
+		 
+		if (captionDiv != null){
+			//captionDiv.innerHTML = "Total time: " + totalTime + " - min Time: " + minTime + " - max Time" + maxTime + " - min Value: " + minValue + " - max Value: " + maxValue);
+			captionDiv.innerHTML = "Total time: " + totalTime + " || min Time: " + minTime + " || max Time" + maxTime + " || min Value: " + minValue + " || max Value: " + maxValue;
+		}
+		 
+		
+ 	}
+  		
+</script>
+
+</head>
+<body onload = "init()">
+	
+	<section> 
+		<button onclick = "parseValues()">Parse 'em</button>
+		 
+	</section>
+	<section>
+		<textarea id = "textDisplayId" width="100%" height="50%" rows="25" cols = "50" style = "display: inline-block;">Paste your data here and "Parse 'em"
+	
+		</textarea>	 
+	</section>
+	
+
+	
+	<!--  for now.. coordinate the width height with the variables in the script section -->
+	<section style = "display: block; margin: 2em;">
+		<canvas id="xCanvasSig" width="500px" height="250px" style="border:2px solid #000000; "></canvas>
+		<div >X Values</div>
+		<div id  = "xCaption"></div>
+	</section>
+	<section style = "display: block; margin: 2em;">
+		<canvas id="yCanvasSig" width="500px" height="250px" style="border:2px solid #000000;"></canvas>
+		<div >Y Values</div>
+		<div id  = "yCaption"></div>
+	</section>
+	<section style = "display: block; margin: 2em;">
+		<canvas id="zCanvasSig" width="500px" height="250px" style="border:2px solid #000000;"></canvas>
+		<div >Z Values</div>
+		<div id  = "zCaption"></div>
+	</section>
+</body>
+</html>
