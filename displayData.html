@@ -8,9 +8,7 @@
 
 <script>
 
-	// for drawing the graphs
-	var touchCanvas;
-	var touchContext;
+
 	
 	var xDrawingCanvas;
 	var xDrawingContext;
@@ -28,9 +26,6 @@
  
 	var accelerationValues = [];
 	
-	// some variables that relate to 6050 values
- 
-		
 	
 	function init(){
 	  
@@ -83,10 +78,7 @@
  			xDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
  			yDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
  			zDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
-		//drawNormalizedAccelrationVelocity(accelerationValues, "red");
-		//drawArrayIndexValue(accelerationValues, 1, red) ;
-		//drawNormalizedAccelrationVelocity(velocityValues, "blue");
-		
+	
 		drawArrayIndexValue(xDrawingContext, accelerationValues,1,"red", xCaption);
 		drawArrayIndexValue(yDrawingContext, accelerationValues,2,"green" , yCaption);
 		drawArrayIndexValue(zDrawingContext, accelerationValues,3,"blue" , zCaption );
