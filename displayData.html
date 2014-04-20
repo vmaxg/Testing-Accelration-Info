@@ -8,7 +8,9 @@
 
 <script>
 
-
+	// for drawing the graphs
+	var touchCanvas;
+	var touchContext;
 	
 	var xDrawingCanvas;
 	var xDrawingContext;
@@ -25,7 +27,11 @@
 	 
  
 	var accelerationValues = [];
-	
+	var velocityValues = [];
+	var rofTValues = [];
+	// some variables that relate to 6050 values
+ 
+		
 	
 	function init(){
 	  
@@ -39,11 +45,14 @@
 		zDrawingCanvas = document.getElementById("zCanvasSig");
 		zDrawingContext = zDrawingCanvas.getContext("2d");
 		
+		parseValues();
 	} 
 	
 	
 	function parseValues(){
 		accelerationValues = [];
+		rofTValues = [];
+		velocityValues = [];
 		var values = textDisplayId.value;
 		//alert(values);
 		
@@ -71,21 +80,151 @@
 			
 		}
 		 
-		drawAccelerationVelocity();
+		computeVelocities(); 
+		computeRofT();
+		drawAccelerationVelocity(1);
+		
+		fillInTextFields();
+		
 	} 
   
- 		function drawAccelerationVelocity(){
- 			xDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
- 			yDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
- 			zDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+	function computeVelocities(){
+		itemInit = accelerationValues[0];
+		preT = itemInit[0];
+		preX = itemInit[1];
+		preY = itemInit[2];
+		preZ = itemInit[3];
+		
+		itemToPush = [];
+		itemToPush.push(preT);
+		itemToPush.push(0);
+		itemToPush.push(0);
+		itemToPush.push(0);
 	
-		drawArrayIndexValue(xDrawingContext, accelerationValues,1,"red", xCaption);
-		drawArrayIndexValue(yDrawingContext, accelerationValues,2,"green" , yCaption);
-		drawArrayIndexValue(zDrawingContext, accelerationValues,3,"blue" , zCaption );
+		velocityValues.push(itemToPush);
+	
+		for (i = 1; i < accelerationValues.length; i++){
+			itemInit = accelerationValues[i];
+			nextT = itemInit[0];
+			nextX = itemInit[1];
+			nextY = itemInit[2];
+			nextZ = itemInit[3];
+			
+			deltaT = parseFloat(nextT-preT).toFixed(5);
+			
+			itemToPush = [];
+			itemToPush.push(  parseFloat(nextT).toFixed(2) );
+			itemToPush.push(  parseFloat(  (nextX-preX)/deltaT ).toFixed(2)  );
+			itemToPush.push(  parseFloat(  (nextY-preY)/deltaT ).toFixed(2)  );
+			itemToPush.push(  parseFloat(  (nextZ-preZ)/deltaT ).toFixed(2)  );
+			
+			velocityValues.push(itemToPush);
+			//alert( "accelX: " + itemToPush[1] + " - " + (nextX-preX) + " - " + nextX + " - " + preX);
+			
+			preT = nextT;
+			preX = nextX;
+			preY = nextY;
+			preZ = nextZ;
+				
+		}
+	} 	
+ 	
+ 	
+ 	function computeRofT(){
+		itemInit = velocityValues[0];
+		preT = itemInit[0];
+		preX = itemInit[1];
+		preY = itemInit[2];
+		preZ = itemInit[3];
+		
+		itemToPush = [];
+		itemToPush.push(preT);
+		itemToPush.push(0);
+		itemToPush.push(0);
+		itemToPush.push(0);
+	
+		rofTValues.push(itemToPush);
+	
+		for (i = 1; i < velocityValues.length; i++){
+			itemInit = velocityValues[i];
+			nextT = itemInit[0];
+			nextX = itemInit[1];
+			nextY = itemInit[2];
+			nextZ = itemInit[3];
+			
+			deltaT = parseFloat(nextT-preT).toFixed(5);
+			
+			itemToPush = [];
+			itemToPush.push(  parseFloat(nextT).toFixed(2) );
+			itemToPush.push(  parseFloat(  (nextX-preX) * deltaT ).toFixed(2)  );
+			itemToPush.push(  parseFloat(  (nextY-preY) * deltaT ).toFixed(2)  );
+			itemToPush.push(  parseFloat(  (nextZ-preZ) * deltaT ).toFixed(2)  );
+			
+			rofTValues.push(itemToPush);
+			//alert( "rofT: " + itemToPush[1] + " - " + (nextX-preX) + " - " + nextX + " - " + preX + " - " + deltaT) ;
+			
+			preT = nextT;
+			preX = nextX;
+			preY = nextY;
+			preZ = nextZ;
+				
+		}
+	} 	
+	function fillInTextFields(){
+		for(i = 0 ; i < accelerationValues.length; i++){
+			var it = velocityValues[i];
+			
+			var txt = it[0]+ " , " + it[1] + " , " + it[2] + " , " + it[3] + "\n";
+			velocityTextId.value = velocityTextId.value + txt;
+		}
+		for(i = 0 ; i < rofTValues.length; i++){
+			var it = rofTValues[i];
+			
+			var txt = it[0]+ " , " + it[1] + " , " + it[2] + " , " + it[3] + "\n";
+			rofTTextId.value = rofTTextId.value + txt;
+		}
+	}
+ 		
+ 	function showThis(val){
+ 			drawAccelerationVelocity(val);
+ 	
+ 	}	
+ 		
+ 	function drawAccelerationVelocity(whatToDraw){
+		xDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+		yDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+		zDrawingContext.clearRect ( 0,0,widthCanvas,heightCanvas);
+	//drawNormalizedAccelrationVelocity(accelerationValues, "red");
+		//drawArrayIndexValue(accelerationValues, 1, red) ;
+		//drawNormalizedAccelrationVelocity(velocityValues, "blue");
+		
+		if (whatToDraw == 1){
+		// 0,1 in the first one draws the x axis against time - 0,2 draws y axis against time - 0,3 draws z axis against time.  
+			drawArrayIndexValue(xDrawingContext, accelerationValues,0,1,"red", xCaption);
+			drawArrayIndexValue(yDrawingContext, accelerationValues,0,2,"green" , yCaption);
+			drawArrayIndexValue(zDrawingContext, accelerationValues,0,3,"blue" , zCaption );
+		}
+		else if (whatToDraw == 2){
+			 drawArrayIndexValue(xDrawingContext, velocityValues,0,1,"red", xCaption);
+			 drawArrayIndexValue(yDrawingContext, velocityValues,0,2,"green" , yCaption);
+			 drawArrayIndexValue(zDrawingContext, velocityValues,0,3,"blue" , zCaption );
+		}
+		else  {
+			drawArrayIndexValue(xDrawingContext, rofTValues,0,1,"red", xCaption);
+			drawArrayIndexValue(yDrawingContext, rofTValues,0,2,"green" , yCaption);
+			drawArrayIndexValue(zDrawingContext, rofTValues,0,3,"blue" , zCaption );
+		}
+		
+		// this theorically draws the x and y values - but it's a mess.  Not sure why - I'll bet I'm not really drawing what I  think I'm drawing.. 
+		//drawArrayIndexValue(zDrawingContext, rofTValues,1,2,"blue" , zCaption );
+		
+		//drawArrayIndexValue(xDrawingContext, rofTValues,0,1,"red", xCaption);
+		//drawArrayIndexValue(yDrawingContext, rofTValues,0,2,"green" , yCaption);
+		//drawArrayIndexValue(zDrawingContext, rofTValues,0,3,"blue" , zCaption );
 		
 	}
 	
- 	function drawArrayIndexValue(context, arrayV, indexToDraw, colorToUse, captionDiv ) {
+ 	function drawArrayIndexValue(context, arrayV, indexToDrawX, indexToDraw, colorToUse, captionDiv ) {
  			//alert(arrayV);
  			
  			// first go through the whole thing and add up the total time.. important for graphing.. 
@@ -104,12 +243,12 @@
 				minValue = itemVal[indexToDraw];
 			}
 			
-			if (itemVal[0] > maxTime){
-				maxTime = itemVal[0];
+			if (itemVal[indexToDrawX] > maxTime){
+				maxTime = itemVal[indexToDrawX];
 			}
 			 
-			if (itemVal[0] < minTime){
-				minTime = itemVal[0];
+			if (itemVal[indexToDrawX] < minTime){
+				minTime = itemVal[indexToDrawX];
 			} 
 		}
 		
@@ -131,7 +270,7 @@
 		
 		for (i = 0; i < arrayV.length; i++){
 			var theItem = arrayV[i];
-			xpoint = (theItem[0] * xInc) - xAdj;
+			xpoint = (theItem[indexToDrawX] * xInc) - xAdj;
 			ypoint = heightCanvas - ( (theItem[indexToDraw] * yInc) - yAdj );
 			//alert(xpoint + " - " + ypoint)
 			//alert(theItem.t + " - " + theItem.x + " - " + whereX + " - " + axisY)
@@ -157,9 +296,83 @@
 		 
 	</section>
 	<section>
-		<textarea id = "textDisplayId" width="100%" height="50%" rows="25" cols = "50" style = "display: inline-block;">Paste your data here and "Parse 'em"
-	
-		</textarea>	 
+		<textarea id = "textDisplayId"  rows="25" cols = "30" style = "display: inline-block;">4.78,-0.15,-0.15,9.72
+4.82,0.29,0.44,9.86
+4.85,0.15,0.44,9.72
+4.88,0.29,0.00,9.86
+4.92,0.29,0.44,9.72
+4.95,0.00,0.15,9.86
+4.98,0.29,0.44,9.86
+5.02,0.29,0.87,9.86
+5.05,0.15,0.29,9.86
+5.08,0.00,0.29,10.01
+5.11,0.00,0.58,10.15
+5.15,0.00,0.29,9.86
+5.18,0.58,0.00,9.86
+5.21,0.15,-0.29,9.57
+5.25,0.00,-0.29,9.72
+5.28,0.00,0.00,9.72
+5.31,0.15,-1.31,9.86
+5.35,1.02,-0.44,9.72
+5.38,0.00,-0.29,9.86
+5.41,0.15,-1.31,9.72
+5.44,0.29,-0.15,9.72
+5.48,0.29,-0.29,9.72
+5.51,0.44,-0.15,9.72
+5.54,0.73,0.00,9.86
+5.58,1.02,-0.29,9.86
+5.61,1.16,0.15,9.72
+5.64,0.73,0.00,9.72
+5.68,0.44,0.29,9.72
+5.71,0.87,0.00,9.72
+5.74,0.73,-0.29,9.86
+5.77,-0.29,-0.15,9.86
+5.81,0.15,0.87,10.01
+5.84,-1.16,-0.44,9.86
+5.87,-1.45,0.00,9.86
+5.91,-1.16,0.15,10.01
+5.94,-0.44,-0.15,9.86
+5.97,0.15,0.00,9.86
+6.01,0.00,-0.87,9.86
+6.04,0.00,-0.87,9.86
+6.07,0.29,-1.02,9.72
+6.10,0.29,-0.87,9.86
+6.14,-0.15,-0.73,9.86
+6.17,0.00,-0.44,9.86
+6.20,0.00,-1.31,9.86
+6.24,0.15,0.00,9.86
+6.27,0.15,0.44,9.72
+6.30,0.15,1.31,9.86
+6.34,0.15,0.73,9.86
+6.37,0.29,1.60,9.86
+6.40,0.15,1.74,9.86
+6.43,0.15,0.29,9.86
+6.47,0.15,0.00,9.86
+6.50,1.89,2.61,9.86
+6.53,-1.16,-0.15,9.72
+6.57,0.15,0.29,9.72
+6.60,0.15,-0.15,9.72
+6.63,0.00,-0.58,9.72
+6.67,-0.15,-0.58,9.86
+6.70,0.00,-0.73,9.86
+6.73,0.15,-0.15,9.86
+
+</textarea>	 
+<textarea id = "velocityTextId" rows="25" cols = "30" style = "display: inline-block;">
+Acceleration will show here (dV / dT)
+</textarea>
+
+<textarea id = "rofTTextId" rows="25" cols = "30" style = "display: inline-block;">
+R(T)  (dA * dT)
+</textarea>
+
+<section>
+<input type = "radio" value= "acceleration" name = "whattoshow" onclick = "showThis(1)" checked>Graph Acceleration
+<input type = "radio" value= "velocity" name = "whattoshow" onclick = "showThis(2)">Graph Velocity
+<input type = "radio" value= "rofT" name = "whattoshow"  onclick = "showThis(3)">Graph R(T)
+
+</section>
+
 	</section>
 	
 
